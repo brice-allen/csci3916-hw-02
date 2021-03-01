@@ -37,9 +37,7 @@ function getJSONObjectForMovieRequirement(req) {
 }
 
 router.post('/signup', function (req, res) {
-    if (!req.body.username) {
-        res.json({success: false, msg: 'Please include both username and password to signup.'})
-    } else if (!req.body.password) {
+    if (!req.body.username || !req.body.password) {
         res.json({success: false, msg: 'Please include both username and password to signup.'})
     } else {
         var newUser = {
