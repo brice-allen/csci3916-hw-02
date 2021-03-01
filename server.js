@@ -17,7 +17,7 @@ var cors = require('cors');
 var app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
 app.use(passport.initialize());
 
@@ -30,19 +30,16 @@ function getJSONObjectForMovieRequirement(req) {
         body: "No body"
     };
 
-    if (req.body != null) {
-        json.body = req.body;
-    }
+    if (req.body != null) json.body = req.body;
 
-    if (req.headers != null) {
-        json.headers = req.headers;
-    }
-
+    if (req.headers != null) json.headers = req.headers;
     return json;
 }
 
-router.post('/signup', function(req, res) {
-    if (!req.body.username || !req.body.password) {
+router.post('/signup', function (req, res) {
+    if (!req.body.username) {
+        res.json({success: false, msg: 'Please include both username and password to signup.'})
+    } else if (!req.body.password) {
         res.json({success: false, msg: 'Please include both username and password to signup.'})
     } else {
         var newUser = {
@@ -60,39 +57,86 @@ router.post('/signin', function (req, res) {
 
     if (!user) {
         res.status(401).send({success: false, msg: 'Authentication failed. User not found.'});
+    } else if (req.body.password == user.password) {
+        var userToken = {id: user.id, username: user.username};
+        var token = jwt.sign(userToken, process.env.SECRET_KEY);
+        res.json({success: true, token: 'JWT ' + token});
     } else {
-        if (req.body.password == user.password) {
-            var userToken = { id: user.id, username: user.username };
-            var token = jwt.sign(userToken, process.env.SECRET_KEY);
-            res.json ({success: true, token: 'JWT ' + token});
-        }
-        else {
-            res.status(401).send({success: false, msg: 'Authentication failed.'});
-        }
+        res.status(401).send({success: false, msg: 'Authentication failed.'});
     }
 });
 
 router.route('/testcollection')
-    .delete(authController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+    .delete(authController.isAuthenticated, function (req, res) {
+            console.log(req.body);
+            res = res.status(200);
+            if (req.get('Content-Type')) res = res.type(req.get('Content-Type'));
+            var o = getJSONObjectForMovieRequirement(req);
+            res.json(o);
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        res.json(o);
-    }
     )
-    .put(authJwtController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+    .put(authJwtController.isAuthenticated, function (req, res) {
+            console.log(req.body);
+            res = res.status(200);
+            if (req.get('Content-Type')) res = res.type(req.get('Content-Type'));
+            var o = getJSONObjectForMovieRequirement(req);
+            res.json(o);
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        res.json(o);
-    }
     );
+router.route('/movies')
+    .get((req, res) => {
+            //valid user
+            res.json({
+                    status: 200,
+                    msg: 'GET movies',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.UNIQUE_KEY
+                }
+            );
+        }
+    )
+    .post((req, res) => {
+            res.json({
+                    status: 200,
+                    msg: "movie saved",
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.UNIQUE_KEY
+                }
+            );
+        }
+    )
+
+    .put(authJwtController.isAuthenticated, (req, res) => {
+            console.log(req.body);
+            res = res.status(200).send({
+                    success: true,
+                    msg: "movie updated",
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.UNIQUE_KEY
+                }
+            );
+            if (req.get('Content-Type')) res = res.type(req.get('Content-Type'));
+            var o = getJSONObjectForMovieRequirement(req);
+            res.json(o);
+
+        }
+    )
+    .delete(authController.isAuthenticated, (req, res) => {
+            console.log(req.body);
+            res = res.status(200);
+            if (req.get('Content-Type')) res = res.type(req.get('Content-Type'));
+            var o = getJSONObjectForMovieRequirement(req);
+            res.json(o);
+        }
+    );
+router.all('*', (req, res) => {
+    res.json({
+        error: "Unsupported method."
+    });
+});
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);

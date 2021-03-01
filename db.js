@@ -1,5 +1,6 @@
 /**
  * Created by shawnmccarthy on 1/22/17.
+ * Updated by brice-allen on 2021/02/24.
  */
 'use strict;';
 //Include crypto to generate the movie id
@@ -10,7 +11,7 @@ module.exports = function () {
         /*
          * Save the user inside the "db".
          */
-        save: function (user) {
+        save(user) {
             user.id = crypto.randomBytes(20).toString('hex'); // fast enough for our purpose
             this.userList.push(user);
             return 1;
@@ -18,36 +19,23 @@ module.exports = function () {
         /*
          * Retrieve a movie with a given id or return all the movies if the id is undefined.
          */
-        find: function (id) {
-            if (id) {
-                return this.userList.find(function (element) {
-                    return element.id === id;
-                });
-            }
-            else {
-                return this.userList;
-            }
+        find(id) {
+            return id ? this.userList.find(function (element) {
+                return element.id === id;
+            }) : this.userList;
         },
-        findOne: function (name) {
-            if (name) {
-                return this.userList.find(function (element) {
-                    return element.username === name;
-                });
-            }
-            else {
-                return this.userList;
-            }
+        findOne(name) {
+            return name ? this.userList.find(function (element) {
+                return element.username === name;
+            }) : this.userList;
         },
         /*
          * Delete a movie with the given id.
          */
-        remove: function (id) {
+        remove(id) {
             var found = 0;
             this.userList = this.userList.filter(function (element) {
-                if (element.id === id) {
-                    found = 1;
-                }
-                else {
+                if (element.id === id) found = 1; else {
                     return element.id !== id;
                 }
             });
@@ -56,7 +44,7 @@ module.exports = function () {
         /*
          * Update a movie with the given id
          */
-        update: function (id, user) {
+        update(id, user) {
             var userIndex = this.userList.findIndex(function (element) {
                 return element.id === id;
             });
@@ -65,9 +53,7 @@ module.exports = function () {
                 this.userList[userIndex].password = user.password;
                 return 1;
             }
-            else {
-                return 0;
-            }
+            return 0;
         }
     };
 };
